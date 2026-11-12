@@ -73,7 +73,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Plus Jakarta S
 <script>
 const $=s=>document.querySelector(s);
 /* ===== SETTINGS: paste your own backend URL here to switch on real AI replies (see README). Leave empty for demo mode. ===== */
-const CONFIG={API_URL:''};
+const  CONFIG={API_URL:'/api/chat'};
 async function ask(msgs){
   if(!CONFIG.API_URL)return null;
   const r=await fetch(CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tone:$('#tone').value,messages:msgs.slice(-12).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})});

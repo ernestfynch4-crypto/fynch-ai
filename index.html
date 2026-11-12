@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#5b5bd6">
+<meta name="description" content="fynch Ai: a simple everyday helper for messages, ideas, notes and plans.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>fynch Ai – your everyday helper</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5fa;--surface:#fff;--soft:#eef0f8;--line:#e2e5f0;--text:#1d2033;--muted:#6b7090;--accent:#5b5bd6;--accent-soft:#e8e8fb;--accent-text:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14151f;--surface:#1c1e2c;--soft:#252838;--line:#2f3347;--text:#eceefb;--muted:#9a9fc0;--accent:#8b8bf0;--accent-soft:#2b2c4d;--accent-text:#14151f}}
+:root[data-theme="dark"]{--bg:#14151f;--surface:#1c1e2c;--soft:#252838;--line:#2f3347;--text:#eceefb;--muted:#9a9fc0;--accent:#8b8bf0;--accent-soft:#2b2c4d;--accent-text:#14151f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.55}
+.card{background:var(--surface);border:1px solid var(--line)}
+.msg{white-space:pre-wrap;word-wrap:break-word}
+.pop{animation:pop .25s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.dot{width:7px;height:7px;border-radius:9999px;background:var(--muted);animation:b 1.2s infinite ease-in-out}
+.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.btn{transition:background .15s,transform .1s,border-color .15s}.btn:active{transform:scale(.97)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.scroll{overflow-y:auto;overscroll-behavior:contain}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="flex h-full overflow-hidden">
+  <div id="scrim" class="fixed inset-0 bg-black/40 z-20 hidden md:hidden" data-act="menu"></div>
+  <aside id="side" class="fixed md:static inset-y-0 left-0 z-30 w-72 max-w-[85%] -translate-x-full md:translate-x-0 transition-transform flex flex-col" style="background:var(--surface);border-right:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)">
+    <div class="p-4 flex items-center gap-2">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style="background:var(--accent-soft)">🌿</div>
+      <div class="font-bold text-lg">fynch Ai</div>
+    </div>
+    <div class="px-4"><button data-act="new" class="btn w-full rounded-xl py-2.5 font-semibold text-sm" style="background:var(--accent);color:var(--accent-text)">+ New chat</button></div>
+    <div class="flex gap-1 mx-4 mt-4 p-1 rounded-xl" style="background:var(--soft)">
+      <button data-act="tab" data-v="recent" id="t-recent" class="btn flex-1 rounded-lg py-1.5 text-sm font-medium">Recent</button>
+      <button data-act="tab" data-v="saved" id="t-saved" class="btn flex-1 rounded-lg py-1.5 text-sm font-medium">Saved</button>
+    </div>
+    <div id="list" class="scroll flex-1 p-3 space-y-2"></div>
+    <div class="p-4 text-xs" style="color:var(--muted)">Your chats stay in this browser only.</div>
+  </aside>
+
+  <main class="flex-1 min-w-0 flex flex-col h-full">
+    <header class="flex items-center gap-3 px-4 py-3" style="background:var(--surface);border-bottom:1px solid var(--line)">
+      <button data-act="menu" class="md:hidden btn rounded-lg p-2" aria-label="Open menu" style="background:var(--soft)">☰</button>
+      <div class="font-semibold truncate" id="title">New chat</div>
+      <select id="tone" aria-label="Tone" class="ml-auto text-xs rounded-lg px-2 py-1.5 outline-none" style="background:var(--soft);color:var(--text)"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="short">Short</option><option value="playful">Playful</option></select>
+    </header>
+
+    <div id="feed" class="scroll flex-1 px-4 py-6">
+      <div id="inner" class="max-w-2xl mx-auto space-y-4"></div>
+    </div>
+
+    <div class="px-4 pb-4 pt-2">
+      <div class="max-w-2xl mx-auto">
+        <div class="card rounded-2xl flex items-end gap-2 p-2 shadow-sm">
+          <textarea id="input" rows="1" placeholder="Ask for anything…" class="flex-1 resize-none bg-transparent px-3 py-2 outline-none max-h-40" style="color:var(--text)"></textarea>
+          <button id="send" data-act="send" class="btn rounded-xl px-4 py-2 font-semibold text-sm" style="background:var(--accent);color:var(--accent-text)">Send</button>
+        </div>
+        <div class="text-center text-xs mt-2" style="color:var(--muted)">Press Enter to send · Shift+Enter for a new line</div>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-24 px-4 py-2 rounded-full text-sm opacity-0 pointer-events-none transition-opacity z-50" style="background:var(--text);color:var(--bg)"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+/* ===== SETTINGS: paste your own backend URL here to switch on real AI replies (see README). Leave empty for demo mode. ===== */
+const CONFIG={API_URL:''};
+async function ask(msgs){
+  if(!CONFIG.API_URL)return null;
+  const r=await fetch(CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tone:$('#tone').value,messages:msgs.slice(-12).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})});
+  if(!r.ok)throw new Error('bad');return (await r.json()).reply;
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const GREET="Hi there! 👋 I’m fynch Ai, your everyday helper. I can draft messages, brainstorm ideas, summarise notes and plan your day. Pick a card below or just tell me what you need.";
+const PRESETS=[
+ ['✍️','Draft a professional message','Draft a professional message'],
+ ['💡','Brainstorm weekend project ideas','Brainstorm weekend project ideas'],
+ ['📝','Summarise a text or note','Summarise a text or note'],
+ ['📅','Plan my daily checklist','Plan my daily checklist'],
+ ['🎁','Find a thoughtful gift idea','Brainstorm gift ideas'],
+ ['💬','Write a friendly text message','Write a friendly text message']
+];
+let st={chats:[],saved:[],active:null,tab:'recent'},busy=false;
+try{const d=JSON.parse(localStorage.getItem('nudge')||'null');if(d&&d.chats)st=Object.assign(st,d,{tab:'recent'})}catch(e){}
+const save=()=>{try{localStorage.setItem('nudge',JSON.stringify({chats:st.chats,saved:st.saved,active:st.active}))}catch(e){}};
+const cur=()=>st.chats.find(c=>c.id===st.active);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function toast(t){const e=$('#toast');e.textContent=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.opacity=0,1600)}
+
+/* ---------- simulated assistant ---------- */
+function items(t){
+  let s=t.includes(':')?t.split(':').slice(1).join(':'):t;
+  let p=s.split(/\n|,|;|\band\b/i).map(x=>x.replace(/^[-*•\d.\s]+/,'').trim()).filter(x=>x.length>2&&x.length<80);
+  return /plan|schedule|checklist|day/i.test(t)&&p.length>=2&&t.includes(':')?p:[];
+}
+function reply(t){
+  const l=t.toLowerCase(), long=t.length>180;
+  if(/summar|tl;?dr/.test(l)||long&&!/draft|plan/.test(l)){
+    const body=t.replace(/^.*?summari[sz]e[^:]*:?/i,'').trim();
+    if(body.length<120)return "Happy to summarise! Paste the text or notes straight into the box and I’ll pull out the key points.\n\nTip: include any deadlines or names so they don’t get lost.";
+    const sent=body.split(/(?<=[.!?])\s+/).filter(x=>x.length>15).slice(0,4);
+    return "Here’s the short version:\n\n"+sent.map(x=>"• "+x.replace(/[.!?]$/,'')).join("\n")+"\n\nWant it shorter, or turned into action items?";
+  }
+  if(/gift|present/.test(l))return "Here are some thoughtful gift ideas:\n\n• A personalised photo book of shared memories\n• A cosy hand-made hamper (snacks, tea, a small candle)\n• An experience: cooking class, concert or day trip\n• A subscription tied to their hobby\n• A handwritten letter with a small keepsake\n\nTell me who it’s for and your budget, and I’ll narrow it down.";
+  if(/weekend|project|brainstorm|diy|idea/.test(l))return "Weekend project ideas:\n\n• Reorganise one room or drawer you’ve been avoiding\n• Start a small herb or balcony garden\n• Cook a new recipe from another country\n• Make a photo collage or scrapbook\n• Learn a new skill: a language basic, a card trick, simple sketching\n• Plan a day trip to somewhere nearby you haven’t visited\n\nTell me how much time and energy you have and I’ll pick the best fit.";
+  if(/plan|schedule|checklist|agenda|to-?do|day/.test(l)){
+    const it=items(t);
+    if(it.length)return "Here’s your checklist:\n\n"+it.map((x,i)=>"☐ "+x.charAt(0).toUpperCase()+x.slice(1)+(i===0?"  (do this first)":"")).join("\n")+"\n\nTip: put the hardest task in your first focused hour.";
+    return "Here’s a simple day plan you can adjust:\n\n☐ 8:00  Start-of-day: review priorities\n☐ 9:00  Most important task (focus block)\n☐ 11:00  Messages and quick replies\n☐ 12:30  Proper lunch break\n☐ 14:00  Second focus block\n☐ 16:00  Errands or admin\n☐ 17:30  Wrap up and list tomorrow’s top 3\n\nSend me your real to-dos like “plan my day: gym, call mum, finish report” and I’ll tailor it.";
+  }
+  if(/message|email|mail|draft|reply|text|write/.test(l)){
+    if(/friendly|text|casual/.test(l))return "Here’s a friendly message:\n\nHey! Hope your week’s going well 😊 Just checking in. Are you free for a quick catch-up this weekend? Let me know what works for you.\n\nWant it shorter, funnier or more formal?";
+    return "Here’s a professional draft:\n\nSubject: Quick follow-up\n\nHi [Name],\n\nI hope you’re well. I’m writing to follow up on [topic]. Could we find a time this week to discuss next steps? I’m happy to work around your schedule.\n\nThank you for your time.\n\nBest regards,\n[Your name]\n\nTell me who it’s for and what it’s about and I’ll personalise it.";
+  }
+  if(/^(hi|hello|hey)\b/.test(l))return "Hello! 😊 What would you like help with today?";
+  if(/thank/.test(l))return "You’re welcome! Anything else I can help with?";
+  return pick(["I can help with that. Could you share a little more detail? For example who it’s for, the tone you want, or how much time you have.","Good question! Here’s a starting point: break it into three small steps, do the easiest first, then review. Tell me more and I’ll make it specific.","Let’s work it out together. Tell me your goal and any limits, and I’ll suggest a few options. I’m best at drafting, brainstorming, summarising and planning."]);
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  const c=cur();
+  $('#title').textContent=c?c.title:'New chat';
+  const inner=$('#inner');
+  let h='';
+  const msgs=c?c.msgs:[];
+  h+=bubble('a',GREET,-1);
+  if(!msgs.length){
+    h+='<div class="pt-2"><div class="text-sm font-semibold mb-3" style="color:var(--muted)">Quick ideas</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'+
+    PRESETS.map((p,i)=>`<button data-act="preset" data-i="${i}" class="btn card text-left rounded-2xl p-4 hover:-translate-y-0.5 hover:shadow-md transition"><div class="text-2xl mb-1">${p[0]}</div><div class="font-semibold text-sm">${p[1]}</div></button>`).join('')+'</div></div>';
+  }
+  msgs.forEach((m,i)=>h+=bubble(m.r,m.t,i));
+  if(busy)h+='<div class="flex"><div class="card rounded-2xl px-4 py-3 flex gap-1.5 items-center" aria-label="Typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>';
+  inner.innerHTML=h;
+  const f=$('#feed');f.scrollTop=f.scrollHeight;
+  renderList();
+}
+function bubble(r,t,i){
+  if(r==='u')return `<div class="flex justify-end pop"><div class="msg rounded-2xl rounded-br-md px-4 py-2.5 max-w-[85%]" style="background:var(--accent);color:var(--accent-text)">${esc(t)}</div></div>`;
+  const isSaved=st.saved.some(s=>s.text===t);
+  const act=i<0?'':`<div class="flex gap-2 mt-3"><button data-act="copy" data-i="${i}" class="btn rounded-lg px-3 py-1 text-xs font-medium" style="background:var(--soft)">Copy</button><button data-act="star" data-i="${i}" class="btn rounded-lg px-3 py-1 text-xs font-medium" style="background:${isSaved?'var(--accent-soft)':'var(--soft)'}">${isSaved?'★ Saved':'☆ Save'}</button></div>`;
+  return `<div class="flex pop"><div class="card rounded-2xl rounded-bl-md px-4 py-3 max-w-[90%]"><div class="msg">${esc(t)}</div>${act}</div></div>`;
+}
+function renderList(){
+  ['recent','saved'].forEach(v=>{const b=$('#t-'+v),on=st.tab===v;b.style.background=on?'var(--surface)':'transparent';b.style.color=on?'var(--text)':'var(--muted)'});
+  const L=$('#list');
+  if(st.tab==='recent'){
+    L.innerHTML=st.chats.length?st.chats.slice().sort((a,b)=>b.ts-a.ts).map(c=>`<div class="group flex items-center gap-1 rounded-xl px-3 py-2 cursor-pointer" data-act="open" data-id="${c.id}" style="background:${c.id===st.active?'var(--accent-soft)':'transparent'}"><div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">${esc(c.title)}</div><div class="text-xs" style="color:var(--muted)">${new Date(c.ts).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div></div><button data-act="del" data-id="${c.id}" class="btn text-xs px-2 py-1 rounded-md opacity-60 hover:opacity-100" aria-label="Delete chat">✕</button></div>`).join(''):empty('No chats yet. Start one with a quick idea.');
+  }else{
+    L.innerHTML=st.saved.length?st.saved.map(s=>`<div class="card rounded-xl p-3"><div class="text-xs line-clamp-4 msg">${esc(s.text)}</div><div class="flex gap-3 mt-2 text-xs font-medium" style="color:var(--accent)"><button data-act="scopy" data-id="${s.id}">Copy</button><button data-act="sdel" data-id="${s.id}" style="color:var(--muted)">Remove</button></div></div>`).join(''):empty('Nothing saved yet. Tap ☆ Save on any reply.');
+  }
+}
+const empty=t=>`<div class="text-sm text-center px-3 py-8" style="color:var(--muted)">${t}</div>`;
+
+/* ---------- actions ---------- */
+async function copy(t){try{await navigator.clipboard.writeText(t);toast('Copied to clipboard')}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast('Copied to clipboard')}catch(_){toast('Copy didn’t work. Select the text instead.')}a.remove()}}
+function send(text){
+  text=(text||'').trim();if(!text||busy)return;
+  let c=cur();
+  if(!c){c={id:uid(),title:text.slice(0,36),msgs:[],ts:Date.now()};st.chats.push(c);st.active=c.id}
+  c.msgs.push({r:'u',t:text});c.ts=Date.now();busy=true;save();render();
+  $('#input').value='';autosize();
+  (async()=>{let out=null;try{out=await ask(c.msgs)}catch(e){toast('Couldn’t reach the AI. Showing a demo reply.')}await new Promise(r=>setTimeout(r,600));c.msgs.push({r:'a',t:out||reply(text)});busy=false;c.ts=Date.now();save();render()})();
+}
+function menu(open){const s=$('#side');const o=open===undefined?s.classList.contains('-translate-x-full'):open;s.classList.toggle('-translate-x-full',!o);$('#scrim').classList.toggle('hidden',!o)}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,c=cur();
+  if(a==='send')send($('#input').value);
+  else if(a==='preset')send(PRESETS[b.dataset.i][2]);
+  else if(a==='new'){st.active=null;st.tab='recent';save();render();menu(false);$('#input').focus()}
+  else if(a==='tab'){st.tab=b.dataset.v;renderList()}
+  else if(a==='menu')menu();
+  else if(a==='open'&&!e.target.closest('[data-act="del"]')){st.active=b.dataset.id;save();render();menu(false)}
+  else if(a==='del'){st.chats=st.chats.filter(x=>x.id!==b.dataset.id);if(st.active===b.dataset.id)st.active=null;save();render()}
+  else if(a==='copy')copy(c.msgs[b.dataset.i].t);
+  else if(a==='star'){const t=c.msgs[b.dataset.i].t,k=st.saved.findIndex(s=>s.text===t);if(k>=0){st.saved.splice(k,1);toast('Removed from saved')}else{st.saved.unshift({id:uid(),text:t});toast('Saved')}save();render()}
+  else if(a==='scopy')copy(st.saved.find(s=>s.id===b.dataset.id).text);
+  else if(a==='sdel'){st.saved=st.saved.filter(s=>s.id!==b.dataset.id);save();render()}
+});
+const inp=$('#input');
+function autosize(){inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,160)+'px'}
+inp.addEventListener('input',autosize);
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(inp.value)}});
+render();
+</script>
+</body>
+</html>
